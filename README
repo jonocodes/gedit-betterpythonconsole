@@ -1,5 +1,5 @@
-Better Python Console Plugin for Gedit
-======================================
+Better Python Console Plugin for Gedit 3
+========================================
 
 This program is released under the GNU General Public License (GPL) 
 version 2 or later, see the file 'COPYING' for more exciting information.
@@ -24,24 +24,14 @@ Cursor Up/Down : scroll command history
 Requirements
 ============
 
-This program is a plugin for Gedit. So to use it you must have Gedit. 
-Gedit also must have been compiled with plugin support (it normally is).
-
-Site Installation
-================= 
-
-To make the plugin available to all users on your system (or if you only have
-one user), extract the files to your site gedit plugin directory, 
-for example: /usr/lib/gedit-2/plugins/
-
-Each user must then turn it on through Edit > Preferences > Plugins
+This program is a plugin for Gedit 3.
 
 User Installation
 ================= 
 
 To make the plugin only available to one specific user, extract the files 
 to your username's gedit plugin directory, 
-for example: ~/.gnome2/gedit/plugins/
+for example: ~/.local/share/gedit/plugins/
 
 You must then turn it on through Edit > Preferences > Plugins
 
