@@ -19,9 +19,8 @@
 """Core Functions for Gedit to interact with the Python Console. """
 
 import sys
-import gtk
-import gedit
-import gobject
+from gi.repository import Gtk
+from gi.repository import GObject
 import subprocess
 
 # Insert a new item in the Tools menu
@@ -58,7 +57,7 @@ class BetterConsoleHelper:
         manager = self._window.get_ui_manager()
 
         # Create a new action group
-        self._action_group = gtk.ActionGroup("BetterConsolePluginActions")
+        self._action_group = Gtk.ActionGroup("BetterConsolePluginActions")
         self._action_group.add_actions([("BetterConsole", None, _("Run Module"),
                                          'F5', _("Run file in Python Console"),
                                          self.on_clear_document_activate)])
@@ -98,7 +97,7 @@ class BetterConsoleHelper:
         if not doc:
             return
         our_filename = doc.get_short_name_for_display()
-        
+
         # Check for unsaved changes 
         unsaved = self._window.get_unsaved_documents()        
         unsaved_filenames = []
@@ -116,11 +115,11 @@ class BetterConsoleHelper:
             self.send_staus_message(message, mes_id)
             
         # Check for an non-local file    
-        elif doc.get_uri()[:7]!="file://":
-            mes_id = "unsupported_location"
-            message = """This file location is currently unsupported.
-            Please save the file locally."""
-            self.send_staus_message(message, mes_id)
+        # elif doc.get_uri_for_display()[:7]!="file://":
+        #     mes_id = "unsupported_location"
+        #     message = """This file location is currently unsupported.
+        #     Please save the file locally."""
+        #     self.send_staus_message(message, mes_id)
             
         # Everything is fine
         else:
@@ -132,7 +131,7 @@ class BetterConsoleHelper:
                
     def launch_python_console(self, filename):
         """Launch a console."""
-        interpreter_name = "python"
+        interpreter_name = "python2"
         fullpath = self._consolepath + "/consoleinterface.py"
         run_command = [interpreter_name, fullpath, filename]
         p1 = subprocess.Popen(run_command, stdout=subprocess.PIPE)
@@ -142,7 +141,7 @@ class BetterConsoleHelper:
         our_statusbar = self._window.get_statusbar()
         our_newid = our_statusbar.get_context_id(mes_id)
         our_statusbar.push(our_newid, message)
-        gobject.timeout_add(
+        GObject.timeout_add(
             2000,self.clear_statusbar_from_crap,our_newid,our_statusbar)  
 
     def clear_statusbar_from_crap(self, crap_id, status_bar):

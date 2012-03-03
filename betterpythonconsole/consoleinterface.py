@@ -52,10 +52,8 @@ __email__   = 'Nicolas.Rougier@loria.fr'
 
 
 import os.path, sys, traceback
-import pygtk
-pygtk.require('2.0')
-import gtk, pango
-import gconf    
+
+from gi.repository import Gtk, GConf, Pango, GObject, Gdk
 
 stdout = sys.stdout
 if not hasattr(sys, 'ps1'):
@@ -89,8 +87,8 @@ class gtkoutfile:
     def writelines(self, l):
         for s in l:
             self.console.write (s, self.font)
-    def seek(self, a):   raise IOError, (29, 'Illegal seek')
-    def tell(self):      raise IOError, (29, 'Illegal seek')
+    def seek(self, a):   raise IOError(29, 'Illegal seek')
+    def tell(self):      raise IOError(29, 'Illegal seek')
     truncate = tell
 
 
@@ -112,16 +110,16 @@ class gtkinfile:
     def readline(self):
         self.console.input_mode = True
         while self.console.input_mode:
-            while gtk.events_pending():
-                gtk.main_iteration()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
         s = self.console.input
         self.console.input = ''
         return s+'\n'
     def readlines(self): return []
     def write(self, s):  return None
     def writelines(self, l): return None
-    def seek(self, a):   raise IOError, (29, 'Illegal seek')
-    def tell(self):      raise IOError, (29, 'Illegal seek')
+    def seek(self, a):   raise IOError(29, 'Illegal seek')
+    def tell(self):      raise IOError(29, 'Illegal seek')
     truncate = tell
 
 
@@ -198,14 +196,14 @@ class History:
 
 
 # =============================================================================
-class Console (gtk.ScrolledWindow):
+class Console (Gtk.ScrolledWindow):
     """ Interactive GTK console class """
 
     def __init__(self, namespace={}, quit_handler = None):
         """ Initialize console
         """
         # Get font from gedit's entries in gconf
-        client = gconf.client_get_default()
+        client = GConf.Client.get_default()
         default_question = client.get_bool(
             '/apps/gedit-2/preferences/editor/font/use_default_font')
         if default_question == True:
@@ -216,15 +214,15 @@ class Console (gtk.ScrolledWindow):
                 '/apps/gedit-2/preferences/editor/font/editor_font')
         
         # Setup scrolled window
-        gtk.ScrolledWindow.__init__(self)
-        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.set_shadow_type (gtk.SHADOW_ETCHED_IN)
+        GObject.GObject.__init__(self)
+        self.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.set_shadow_type (Gtk.ShadowType.ETCHED_IN)
         self.set_border_width(0)
 
         # Setup text view
-        self.text = gtk.TextView ()
+        self.text = Gtk.TextView ()
         self.text.set_property ('can-focus', True)
-        self.text.modify_font (pango.FontDescription(userfont))
+        self.text.modify_font (Pango.FontDescription(userfont))
         self.text.set_editable (True)
         self.text.set_wrap_mode(True)
         self.text.set_left_margin(1)
@@ -234,20 +232,20 @@ class Console (gtk.ScrolledWindow):
         # Setup text buffer
         self.buffer = self.text.get_buffer ()
         self.buffer.create_tag ('prompt',
-                weight=pango.WEIGHT_BOLD)
+                weight=Pango.Weight.BOLD)
         self.buffer.create_tag ('script',
-                foreground='darkgrey', style=pango.STYLE_OBLIQUE)
+                foreground='darkgrey', style=Pango.Style.OBLIQUE)
         self.buffer.create_tag ('normal',
                 foreground='blue')
         self.buffer.create_tag ('error',
-                foreground='red', style=pango.STYLE_OBLIQUE)
+                foreground='red', style=Pango.Style.OBLIQUE)
         self.buffer.create_tag ('extern',
                 foreground='orange')
         self.buffer.create_tag ('center',
-                justification=gtk.JUSTIFY_CENTER)
+                justification=Gtk.Justification.CENTER)
         
         # Setup event handlers
-        self.text.add_events(gtk.gdk.KEY_PRESS_MASK)
+        self.text.add_events(Gdk.EventMask.KEY_PRESS_MASK)
         self.text.connect ('button-press-event', self.on_button_press)
         self.text.connect ('key-press-event', self.on_key_pressed)
         self.text.connect ('drag-data-received', self.on_drag_data_received)
@@ -282,7 +280,7 @@ class Console (gtk.ScrolledWindow):
 #        iter = self.buffer.get_iter_at_mark(self.buffer.get_insert())
 #        self.buffer.insert (iter, '''Type "help", "copyright", "credits" or'''
 #                                  ''' "license" for more information.\n''')
-        self.text.scroll_to_mark (self.buffer.get_insert(), 0)
+        self.text.scroll_to_mark (self.buffer.get_insert(), 0, False, 0, 0)
         self.prompt1()
 
 
@@ -431,8 +429,8 @@ class Console (gtk.ScrolledWindow):
         commands, it allows to process gtk events even when executing code.
         """
         
-        while gtk.events_pending():
-            gtk.main_iteration()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
         return self.idle
 
 
@@ -443,11 +441,13 @@ class Console (gtk.ScrolledWindow):
         sys.stderr, self.stderr = self.stderr, sys.stderr
         sys.stdin,  self.stdin  = self.stdin,  sys.stdin
         sys.settrace (self.idle)
+
         try:
             try:
                 r = eval (cmd, self.namespace, self.namespace)
+                
                 if r is not None:
-                    print `r`
+                    print(r)
             except SyntaxError:
                 exec cmd in self.namespace
         except:
@@ -455,10 +455,11 @@ class Console (gtk.ScrolledWindow):
                 self.quit_handler()
             else:
                 try:
-                    tb = sys.exc_traceback
+                    info = sys.exc_info()
+                    tb = info[2]
                     if tb:
                         tb = tb.tb_next
-                    traceback.print_exception (sys.exc_type, sys.exc_value, tb)
+                    traceback.print_exception (info[0], info[1], tb)
                 except:
                     sys.stderr, self.stderr = self.stderr, sys.stderr
                     traceback.print_exc()
@@ -474,9 +475,9 @@ class Console (gtk.ScrolledWindow):
         if not filename:
             return
         if not os.path.exists (filename):
-            dialog = gtk.MessageDialog(
-                   None, gtk.DIALOG_DESTROY_WITH_PARENT,
-                   gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
+            dialog = Gtk.MessageDialog(
+                   None, Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                   Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
                    "Unable to open '%s', the file does not exist." % filename)
             dialog.run()
             dialog.destroy()
@@ -493,14 +494,14 @@ class Console (gtk.ScrolledWindow):
 #            for line in f:
 #                self.write ('\t'+line, 'script')
             self.write ('\n')
-            self.execute ("execfile('%s')" % filename)
+            self.execute ("exec(open('%s').read())" % filename)
             self.prompt1()
         finally:
             f.close()
 
     def quit (self, *args):
         """ Default handler on quit """
-        gtk.main_quit();
+        Gtk.main_quit();
         return True
 
     def on_drag_data_received (self, 
@@ -523,7 +524,7 @@ class Console (gtk.ScrolledWindow):
         """ Key pressed handler """
         
         # Enter
-        if event.keyval == gtk.keysyms.Return:
+        if event.keyval == Gdk.KEY_Return:
             if self.input_mode:
                 self.input_mode = False
                 end = self.buffer.get_end_iter()
@@ -535,46 +536,46 @@ class Console (gtk.ScrolledWindow):
             return True
         
         # Previous command
-        elif event.keyval in (gtk.keysyms.KP_Up, gtk.keysyms.Up):
+        elif event.keyval in (Gdk.KEY_KP_Up, Gdk.KEY_Up):
             if not self.input_mode:
                 self.replace (self.history.prev (self.current_line())) 
             return True
         
         # Next command
-        elif event.keyval in (gtk.keysyms.KP_Down, gtk.keysyms.Down):
+        elif event.keyval in (Gdk.KEY_KP_Down, Gdk.KEY_Down):
             if not self.input_mode:
                 self.replace (self.history.next (self.current_line()))
             return True
         
         # Left arrow (control cursor position relative to prompt)
-        elif event.keyval in (gtk.keysyms.KP_Left, gtk.keysyms.Left):
+        elif event.keyval in (Gdk.KEY_KP_Left, Gdk.KEY_Left):
             iter = self.buffer.get_iter_at_mark(self.buffer.get_insert())
             if iter.get_offset() == self.linestart:
                 return True
             return False
         
         # Backspace
-        elif event.keyval == gtk.keysyms.BackSpace:
+        elif event.keyval == Gdk.KEY_BackSpace:
             iter = self.buffer.get_iter_at_mark(self.buffer.get_insert())
             if iter.get_offset() == self.linestart:
                 return True
             return False
 
         # Home
-        elif event.keyval == gtk.keysyms.Home:
+        elif event.keyval == Gdk.KEY_Home:
             start = self.buffer.get_iter_at_offset (self.linestart)
             self.text.get_buffer().place_cursor(start)
             return True
 
-        elif event.state & gtk.gdk.CONTROL_MASK:
+        elif event.get_state() & Gdk.ModifierType.CONTROL_MASK:
             # Ctrl-A
-            if event.keyval in (gtk.keysyms.A, gtk.keysyms.a):
+            if event.keyval in (Gdk.KEY_A, Gdk.KEY_a):
                 start = self.buffer.get_iter_at_offset (self.linestart)
                 self.text.get_buffer().place_cursor(start)
                 return True
 
             # Ctrl-E
-            elif event.keyval in (gtk.keysyms.E, gtk.keysyms.e):
+            elif event.keyval in (Gdk.KEY_E, Gdk.KEY_e):
                 if self.input_mode:
                     return True
                 end = self.buffer.get_end_iter()
@@ -582,7 +583,7 @@ class Console (gtk.ScrolledWindow):
                 return True
 
             # Ctrl-D
-            elif event.keyval in (gtk.keysyms.D, gtk.keysyms.d):
+            elif event.keyval in (Gdk.KEY_D, Gdk.KEY_d):
                 if self.input_mode:
                     return True     
                 iter = self.buffer.get_iter_at_mark(self.buffer.get_insert())
@@ -591,7 +592,7 @@ class Console (gtk.ScrolledWindow):
                 return True
             
             # Ctrl-L
-            elif event.keyval in (gtk.keysyms.L, gtk.keysyms.l):
+            elif event.keyval in (Gdk.KEY_L, Gdk.KEY_l):
                 if not self.input_mode:
                     self.clear()
                 return True
@@ -606,11 +607,11 @@ class ConsoleWindow:
     def __init__ (self, ns, title='Python', command=None):
         """ Initialize s console window """
         
-        self.win = gtk.Window()
+        self.win = Gtk.Window()
         self.win.set_default_size (640, 400)
         self.win.set_border_width (3)
-        self.win.connect ("destroy", lambda w: gtk.main_quit())
-        self.win.connect ("delete_event", lambda w, e: gtk.main_quit())
+        self.win.connect ("destroy", lambda w: Gtk.main_quit())
+        self.win.connect ("delete_event", lambda w, e: Gtk.main_quit())
         self.win.set_title (title)
         self.console = Console (namespace=ns)
         self.win.add (self.console)
@@ -619,27 +620,6 @@ class ConsoleWindow:
             self.console.execute (command)
         self.win.show_all()
         
-        logo = ["16 16 4 1",
-                " 	c None", ".	c #476F90", "+	c #FFE35E", "@	c #F3F6F3",
-                "     @@@@@      ",
-                "    @@...@@     ",
-                "    @.@...@     ",
-                "    @.....@     ",
-                " @@@@@@...@@@@  ",
-                "@@........@++@@ ",
-                "@.........@+++@ ",
-                "@....@@@@@++++@ ",
-                "@...@+++++++++@ ",
-                "@@..@++++++++@@ ",
-                " @@@@+++@@@@@@  ",
-                "    @+++++@     ",
-                "    @+++@+@     ",
-                "    @@++++@     ",
-                "     @@@@@      ",
-                "                "]
- 
-        pixbuf = gtk.gdk.pixbuf_new_from_xpm_data(logo)
-        self.win.set_icon (pixbuf)
         return
 
 
@@ -650,4 +630,4 @@ if __name__ == '__main__':
                               title = 'Python Console')
     if len(sys.argv) > 1:
         conswin.console.open (sys.argv[1])
-    gtk.main()
+    Gtk.main()

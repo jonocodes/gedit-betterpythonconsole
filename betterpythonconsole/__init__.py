@@ -18,29 +18,30 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """IDLE like Console for Gedit, hit F5 and it executes the module"""
 
-import gtk
-import gedit
+from gi.repository import Gtk, GObject, Gedit
 import consolefunctions
 import sys
 
-class BetterConsolePlugin(gedit.Plugin):
+class BetterConsolePlugin(GObject.Object, Gedit.WindowActivatable):
     """This Class creates the Gedit plugin. """
+
+    window = GObject.property(type=Gedit.Window)
+
     def __init__(self):
-        gedit.Plugin.__init__(self)
+        GObject.Object.__init__(self)
         self._instances = {}
 
-    def activate(self, window):
+    def do_activate(self):
         """This adds the plugin to the running Gedit. This method is used
         when the plugin is turned on and then when Gedit starts"""
         home_path = __path__[0]
-        self._instances[window] = \
-        consolefunctions.BetterConsoleHelper(self, window, home_path)
+        self._instances[self.window] = consolefunctions.BetterConsoleHelper(self, self.window, home_path)
 
-    def deactivate(self, window):
+    def do_deactivate(self):
         """This removes the plugin from the running Gedit."""
-        self._instances[window].deactivate()
-        del self._instances[window]
+        self._instances[self.window].deactivate()
+        del self._instances[self.window]
 
-    def update_ui(self, window):
+    def update_ui(self):
         """We do not use this yet."""
-        self._instances[window].update_ui()
+        self._instances[self.window].update_ui()
