@@ -1,0 +1,10 @@
+[Gedit Plugin]
+Loader=python
+Module=betterpythonconsole
+IAge=2
+Name=Better Python Console
+Description=A python console in the style of IDLE.
+Icon=gnome-mime-text-x-python
+Authors=Zeth Green
+Copyright=Copyright © 2006-7 Zeth Green 
+Website=http://www.pywm.eu

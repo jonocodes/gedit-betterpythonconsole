@@ -1,0 +1,61 @@
+Better Python Console Plugin for Gedit
+======================================
+
+This program is released under the GNU General Public License (GPL) 
+version 2 or later, see the file 'COPYING' for more exciting information.
+
+General Information
+===================
+
+The Better Python Console Plugin aims to provide a simple IDLE-like Python 
+console for the Gnome Editor. Unlike IDLE, you can open as many consoles 
+as you need. 
+
+To execute your current Python file, hit F5 or choose the option from the 
+'Tools' menu. The console interface has the following shortcuts:
+
+Ctrl-D : close the current window
+Ctrl-A : go to line start
+Ctrl-E : go to line end
+Ctrl-K : clear line from cursor to end
+Ctrl-L : clear window 
+Cursor Up/Down : scroll command history
+
+Requirements
+============
+
+This program is a plugin for Gedit. So to use it you must have Gedit. 
+Gedit also must have been compiled with plugin support (it normally is).
+
+Site Installation
+================= 
+
+To make the plugin available to all users on your system (or if you only have
+one user), extract the files to your site gedit plugin directory, 
+for example: /usr/lib/gedit-2/plugins/
+
+Each user must then turn it on through Edit > Preferences > Plugins
+
+User Installation
+================= 
+
+To make the plugin only available to one specific user, extract the files 
+to your username's gedit plugin directory, 
+for example: ~/.gnome2/gedit/plugins/
+
+You must then turn it on through Edit > Preferences > Plugins
+
+Technical Description
+=====================
+
+The Python Console plugin distributed by default with gedit is primarily 
+designed to help you access the gedit API, for example, to write gedit 
+plugins or to run a Python command on a document. However, if you attempt to 
+develop a Python program of any complexity then you will find yourself 
+crashing gedit very quickly indeed.
+
+This plugin takes a different approach, instead of providing access to the 
+gedit API, it keeps away from it as far as possible, reducing the risk to the
+running editor. It aims to follow the approach of the IDLE interpreter - the
+Console Window runs as a separate process. A small (minute) performance 
+penalty is better than watching gedit lockup and lose your work. 
